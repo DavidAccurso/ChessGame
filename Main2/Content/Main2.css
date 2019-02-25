@@ -1,0 +1,28 @@
+﻿table td {
+    text-align: center;
+    font-size: 32px;
+}
+fila,columna {
+    font-weight: bold;
+    font-size: 12px;
+    background-color:darkgrey;
+}
+
+table tr td.posibleMovement {
+    background-color: greenyellow;
+    border-color: chartreuse;
+    border-style: solid;
+}
+th, td.header {
+    text-align: center;
+    vertical-align: middle;
+    background-color: peru;
+    color: white;
+    font-size: 15px;
+}
+td.oscuro {
+    background-color: saddlebrown;
+}
+td.claro {
+    background-color: burlywood;
+}
