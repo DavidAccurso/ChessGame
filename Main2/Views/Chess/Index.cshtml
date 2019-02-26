@@ -1,0 +1,169 @@
+﻿@model Models.Chessboard
+@{ List<Models.Piece> lista = Model.pieces; }
+<div class="container container-fluid">
+    <h1>Chess</h1>
+    <h4>The game start with an aleatory position of pieces. The color White start.</h4>
+    <br />
+    <button class="btn btn-block btn-primary" id="btnNewGame">New Game</button>
+    <br />
+    <h2>Turno de el color: @Model.colorWhoDoMove</h2>
+    <br />
+    <table class="table table-responsive ">
+        <thead>
+            <tr>
+                <th></th>
+                <th>1</th>
+                <th>2</th>
+                <th>3</th>
+                <th>4</th>
+                <th>5</th>
+                <th>6</th>
+                <th>7</th>
+                <th>8</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{ bool bandera = true; var className = "";}
+            @for (int i = 1; i <= 8; i++)
+            {
+                bandera = !bandera;
+                <tr>
+                    @foreach (int item in new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7, 8 })
+                    {
+                        if (item == 0)
+                        {
+                            <td class="header"><strong>@i</strong></td>
+                        }
+                        else
+                        {
+                            if (bandera)
+                            {
+                                className = "oscuro";
+                            }
+                            else
+                            {
+                                className = "claro";
+                            }
+                            bandera = !bandera;
+
+                            <td class="@className">
+                                @{ Models.Piece p = lista.Where(w => w.coordinate.x == item && w.coordinate.y == i).FirstOrDefault();
+                                    if (p != null)
+                                    {
+                                        @p.Print().ToString();
+                                    }
+                                    else
+                                    {
+                                        @:
+                                    }
+                                }
+                            </td>
+                        }
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E="
+        crossorigin="anonymous"></script>
+<script>
+
+    function clickPiece(x, y) {
+        var test;
+        $.ajax({
+            url: '/Chess/GetPosiblesMovements',
+            type: 'GET',
+            dataType: 'json',
+            contentType: 'application/json',
+            data: { 'x': x, 'y': y },
+            success: function (response) {
+                test = response;
+            }
+        });
+        return test;
+    };
+
+    function movePiece(x, y) {
+        $.post('@Url.Action("Move", "Chess")', { 'x': x, 'y': y }).done(function (data) {
+
+            if (data.resultado == true) {
+                document.location.reload()
+            } else {
+                alert('FIN DEL JUEGO! GANO EL COLOR:  @Model.colorWhoDoMove ');
+            }
+        });
+    };
+
+    $(document).ready(function () {
+
+        $('#btnNewGame').click(function () {
+            $.get('@Url.Action("StartNewGame", "Chess")');
+            document.location.reload();
+        });
+
+        $('td').click(function () {
+            var x = $(this).index();
+            var $tr = $(this).closest('tr');
+            var y = $tr.index();
+            x = x;
+            y = y + 1;
+            //Si tiene  la claseposibleMovement realiza la accion 'Move', si no, GetPosiblesMovements
+            if (($('table tr').eq(y).find('td').eq(x)).hasClass('posibleMovement')) {
+                movePiece(x,y);
+                $('table td').removeClass('posibleMovement');
+            }
+            else {
+                $('table td').removeClass('posibleMovement');
+                var movs;
+                $.ajax({
+                    url: '/Chess/GetPosiblesMovements',
+                    type: 'GET',
+                    dataType: 'json',
+                    async: false,
+                    contentType: 'application/json',
+                    data: { 'x': x, 'y': y },
+                    success: function (response) {
+                        movs = response;
+                    }
+                });
+
+                $.each(movs, function (index, p) {
+                    var x1 = p.TentativeCoordinate.x;
+                    var y2 = p.TentativeCoordinate.y;
+                    $('table tr').eq(y2).find('td').eq(x1).addClass('posibleMovement');
+                });
+            }
+        });
+
+        $('#btnSubmit').click(function () {
+            clickSubmit();
+        });
+
+        $('#btnClear').click(function () {
+            $('#inputX').val = '';
+            $('#inputY').val = '';
+        });
+    });
+
+    function clickSubmit() {
+        var test = $.ajax({
+            url: '/Chess/GetPosition',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                'x': $('#inputX').val(),
+                'y': $('#inputY').val()
+            },
+            success: function (response) {
+                alert('success');
+                $('#result').html(response.responseText);
+            },
+            error: function () {
+                alert('ERROR');
+            }
+        });
+    }
+</script>
